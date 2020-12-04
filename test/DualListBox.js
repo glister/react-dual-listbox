@@ -92,6 +92,34 @@ describe('<DualListBox />', () => {
             assert.deepEqual(['luna', 'phobos', 'phobos'], actual);
         });
 
+        // https://github.com/jakezatecky/react-dual-listbox/issues/103
+        it('should work when simpleValue={false}', () => {
+            let actual = null;
+
+            const wrapper = mount((
+                <DualListBox
+                    allowDuplicates
+                    options={[
+                        { label: 'Moon', value: 'luna' },
+                        { label: 'Phobos', value: 'phobos' },
+                    ]}
+                    selected={[{ label: 'Moon', value: 'luna' }]}
+                    simpleValue={false}
+                    onChange={(selected) => {
+                        actual = selected;
+                    }}
+                />
+            ));
+
+            wrapper.find('.rdl-available select').simulate('change', simulateChange(['luna-0']));
+            wrapper.find('.rdl-available select').simulate('dblclick');
+
+            assert.deepEqual([
+                { label: 'Moon', value: 'luna' },
+                { label: 'Moon', value: 'luna' },
+            ], actual);
+        });
+
         it('should NOT allow repeated selections of the same option when set to false', () => {
             let actual = null;
 
@@ -171,6 +199,28 @@ describe('<DualListBox />', () => {
                 <option value="phobos">Phobos</option>
             )));
         });
+
+        // https://github.com/jakezatecky/react-dual-listbox/issues/110
+        it('should apply even if we allow duplicates', () => {
+            const wrapper = shallow((
+                <DualListBox
+                    allowDuplicates
+                    available={['luna']}
+                    options={[
+                        { label: 'Moon', value: 'luna' },
+                        { label: 'Phobos', value: 'phobos' },
+                    ]}
+                    onChange={() => {}}
+                />
+            ));
+
+            assert.isTrue(wrapper.find('ListBox').at(0).containsMatchingElement((
+                <option value="luna-0">Moon</option>
+            )));
+            assert.isFalse(wrapper.find('ListBox').at(0).containsMatchingElement((
+                <option value="phobos-1">Phobos</option>
+            )));
+        });
     });
 
     describe('props.canFilter', () => {
@@ -211,6 +261,31 @@ describe('<DualListBox />', () => {
 
             assert.isTrue(wrapper.find('ListBox[controlKey="available"] option[value="luna"]').exists());
             assert.isFalse(wrapper.find('ListBox[controlKey="available"] option[value="phobos"]').exists());
+        });
+    });
+
+    describe('props.className', () => {
+        it('should apply the class to the root node if set', () => {
+            const wrapper = shallow((
+                <DualListBox
+                    className="my-class"
+                    options={[{ label: 'Phobos', value: 'phobos' }]}
+                    onChange={() => {}}
+                />
+            ));
+
+            assert.isTrue(wrapper.find('.react-dual-listbox').hasClass('my-class'));
+        });
+
+        it('should not change the root classes if empty', () => {
+            const wrapper = shallow((
+                <DualListBox
+                    options={[{ label: 'Phobos', value: 'phobos' }]}
+                    onChange={() => {}}
+                />
+            ));
+
+            assert.deepEqual('react-dual-listbox', wrapper.find('.react-dual-listbox').prop('className'));
         });
     });
 
@@ -552,6 +627,50 @@ describe('<DualListBox />', () => {
                     <option data-real-value={'"deimos"'} id={getExpectedId('option-deimos')} value="deimos">Deimos</option>
                 </optgroup>
             )));
+        });
+
+        it('should disable marked options and optgroups', () => {
+            const wrapper = shallow((
+                <DualListBox
+                    options={[
+                        {
+                            label: 'Mars',
+                            disabled: true,
+                            options: [
+                                { value: 'phobos', label: 'Phobos', disabled: true },
+                                { value: 'deimos', label: 'Deimos' },
+                            ],
+                        },
+                    ]}
+                    onChange={() => {}}
+                />
+            ));
+
+            assert.isTrue(wrapper.find('ListBox[controlKey="available"] optgroup').prop('disabled'));
+            assert.isTrue(wrapper.find('ListBox[controlKey="available"] option').at(0).prop('disabled'));
+            assert.equal(undefined, wrapper.find('ListBox[controlKey="available"] option').at(1).prop('disabled'));
+        });
+
+        it('should add the `title` attribute to specified options', () => {
+            const wrapper = shallow((
+                <DualListBox
+                    options={[
+                        {
+                            label: 'Mars',
+                            title: 'That one planet we may someday colonize',
+                            options: [
+                                { value: 'phobos', label: 'Phobos', title: 'The larger one' },
+                                { value: 'deimos', label: 'Deimos' },
+                            ],
+                        },
+                    ]}
+                    onChange={() => {}}
+                />
+            ));
+
+            assert.equal('That one planet we may someday colonize', wrapper.find('ListBox[controlKey="available"] optgroup').prop('title'));
+            assert.equal('The larger one', wrapper.find('ListBox[controlKey="available"] option').at(0).prop('title'));
+            assert.equal(undefined, wrapper.find('ListBox[controlKey="available"] option').at(1).prop('title'));
         });
     });
 
@@ -915,6 +1034,32 @@ describe('<DualListBox />', () => {
                 }],
             }], actual);
         });
+
+        it('should also impact those values highlighted by the user', () => {
+            let actualSelection = null;
+
+            const wrapper = mount((
+                <DualListBox
+                    options={[
+                        { label: 'Moon', value: 'luna' },
+                        { label: 'Phobos', value: 'phobos' },
+                    ]}
+                    selected={[]}
+                    simpleValue={false}
+                    onChange={(selected, selection) => {
+                        actualSelection = selection;
+                    }}
+                />
+            ));
+
+            wrapper.find('.rdl-available select').simulate('change', simulateChange(['luna', 'phobos']));
+            wrapper.find('.rdl-move-right').not('.rdl-move-all').simulate('click');
+
+            assert.deepEqual([
+                { label: 'Moon', value: 'luna' },
+                { label: 'Phobos', value: 'phobos' },
+            ], actualSelection);
+        });
     });
 
     describe('props.onChange', () => {
@@ -981,6 +1126,31 @@ describe('<DualListBox />', () => {
             wrapper.find('.rdl-available select').simulate('dblclick');
 
             assert.deepEqual(['one', 2], actual);
+        });
+
+        it('should pass all the options the user highlighted before the change', () => {
+            let actualSelected = null;
+            let actualSelection = null;
+
+            const wrapper = mount((
+                <DualListBox
+                    options={[
+                        { label: 'Moon', value: 'luna' },
+                        { label: 'Phobos', value: 'phobos' },
+                    ]}
+                    selected={['luna', 'phobos']}
+                    onChange={(selected, selection) => {
+                        actualSelected = selected;
+                        actualSelection = selection;
+                    }}
+                />
+            ));
+
+            wrapper.find('.rdl-selected select').simulate('change', simulateChange(['luna', 'phobos']));
+            wrapper.find('.rdl-move-left').not('.rdl-move-all').simulate('click');
+
+            assert.deepEqual([], actualSelected);
+            assert.deepEqual(['luna', 'phobos'], actualSelection);
         });
     });
 

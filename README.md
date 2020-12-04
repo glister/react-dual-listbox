@@ -113,6 +113,36 @@ render() {
 }
 ```
 
+### Disabling Component or Options
+
+Pass in the `disabled` property to disable the entire component. Alternatively, individual options may be disabled on a per-item basis:
+
+``` jsx
+render() {
+    const options = [
+        {
+            label: 'Mars',
+            disabled: true,
+            options: [
+                { value: 'phobos', label: 'Phobos' },
+                { value: 'deimos', label: 'Deimos' },
+            ],
+        },
+        {
+            label: 'Jupiter',
+            options: [
+                { value: 'io', label: 'Io' },
+                { value: 'europa', label: 'Europa', disabled: true },
+                { value: 'ganymede', label: 'Ganymede' },
+                { value: 'callisto', label: 'Callisto' },
+            ],
+        },
+    ];
+
+    return <DualListBox options={options} />;
+}
+```
+
 ### Filtering
 
 You can enable filtering of available and selected options by merely passing in the `canFilter` property:
@@ -239,17 +269,35 @@ By default, **react-dual-listbox** uses Font Awesome for the various icons that 
 />
 ```
 
+### Extract Changed Values
+
+At times it may be useful to know _which_ options the user highlighted when the selected values change. In this case, the second parameter of the `onChange` handler may be used:
+
+``` jsx
+class Widget extends React.Component {
+    ...
+
+    onChange = (selected, selection) => {
+        console.log('The user highlighted these options', selection);
+        this.setState({ selected });
+    };
+    
+    ...
+}
+```
+
 ### All Properties
 
 | Property              | Type     | Description                                                                                                             | Default         |
 | --------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `options`             | array    | **Required**. Specifies the list of options that may exist on either side of the dual list box.                         |                 |
-| `onChange`            | function | **Required**. The onChange handler called when an option is moved to either side: `function(selected) {}`.              |                 |
+| `onChange`            | function | **Required**. The handler called when options are moved to either side: `function(selected) {}`.                        |                 |
 | `alignActions`        | string   | A value specifying whether to align the action buttons to the `'top'` or `'middle'`.                                    | `middle`        |
 | `allowDuplicates`     | bool     | If true, duplicate options will be allowed in the selected list box.                                                    | `false`         |
 | `available`           | array    | A subset of the `options` array to optionally filter the available list box.                                            | `undefined`     |
-| `availableRef`        | function | A React [ref] to the "available" list box.                                                                              | `null`          |
+| `availableRef`        | function | A React function [ref] to the "available" list box.                                                                     | `null`          |
 | `canFilter`           | bool     | If true, search boxes will appear above both list boxes, allowing the user to filter the results.                       | `false`         |
+| `className`           | string   | An optional `className` to apply to the root node.                                                                      | `null`          |
 | `disabled`            | bool     | If true, both "available" and "selected" list boxes will be disabled.                                                   | `false`         |
 | `filterCallback`      | function | The filter function to run on a given option and input string: `function(option, filterInput) {}`. See **Filtering**.   | `() => { ... }` |
 | `filterPlaceholder`   | string   | The text placeholder used when the filter search boxes are empty.                                                       | `"Search..."`   |
@@ -260,11 +308,20 @@ By default, **react-dual-listbox** uses Font Awesome for the various icons that 
 | `name`                | string   | A value for the `name` attribute on the hidden `<input />` element. This is potentially useful for form submissions.    | `null`          |
 | `preserveSelectOrder` | bool     | If true, the order in which the available options are selected are preserved when the items are moved to the right.     | `false`         |
 | `selected`            | array    | A list of the selected options appearing in the rightmost list box.                                                     | `[]`            |
-| `selectedRef`         | function | A React [ref] to the "selected" list box.                                                                               | `null`          |
+| `selectedRef`         | function | A React function [ref] to the "selected" list box.                                                                      | `null`          |
 | `simpleValue`         | bool     | If true, the `selected` value passed in `onChange` is an array of string values. Otherwise, it is an array of options.  | `true`          |
 | `showHeaderLabels`    | bool     | If true, labels above both the available and selected list boxes will appear. These labels are derived from `1ang`.     | `false`         |
 | `showNoOptionsText`   | bool     | If true, text will appear in place of the available/selected list boxes when no options are present.                    | `false`         |
 | `showOrderButtons`    | bool     | If true, a set of up/down buttons will appear near the selected list box to allow the user to re-arrange the items.     | `false`         |
+
+#### Option Properties
+
+| Property   | Type   | Description                                                   |
+| ---------- | ------ | ------------------------------------------------------------- |
+| `label`    | string | **Required**. The text label for the given option.            |
+| `value`    | mixed  | **Required**. The text or numeric value for the given option. |
+| `disabled` | bool   | If true, disables the option from selection.                  |
+| `title`    | string | Adds the HTML `title` attribute to the option.                |
 
 [controlled]: https://facebook.github.io/react/docs/forms.html#controlled-components
 [lang-file]: https://github.com/jakezatecky/react-dual-listbox/blob/master/src/js/lang/default.js
